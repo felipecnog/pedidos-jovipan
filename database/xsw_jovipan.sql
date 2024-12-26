@@ -30,7 +30,7 @@ CREATE TABLE `clientes` (
   `endereco` text NOT NULL,
   `criado_em` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,18 +40,43 @@ CREATE TABLE `clientes` (
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
 INSERT INTO `clientes` VALUES
-(2,'Thays Silva Lima','8','8','2024-12-26 11:17:39'),
-(3,'Joaquim','8','8','2024-12-26 11:17:53'),
-(4,'1','1','1','2024-12-26 11:18:01'),
-(5,'2','2','2','2024-12-26 11:18:06'),
-(6,'3','3','3','2024-12-26 11:18:10'),
-(7,'4','4','4','2024-12-26 11:18:14'),
-(8,'5','5','5','2024-12-26 11:18:18'),
-(9,'6','6','6','2024-12-26 11:18:23'),
-(10,'7','7','7','2024-12-26 11:18:28'),
-(11,'8','8','8','2024-12-26 11:18:33'),
-(12,'9','9','9','2024-12-26 11:18:45');
+(15,'Felipe Campos Nogueira','85982057590','Rua General','2024-12-26 17:00:42'),
+(16,'Tiago Magalhães','85997933381','Sem','2024-12-26 19:25:21');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pedidos`
+--
+
+DROP TABLE IF EXISTS `pedidos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `pedidos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `codigo` varchar(12) NOT NULL,
+  `cliente_id` int(11) NOT NULL,
+  `produto` varchar(100) NOT NULL,
+  `detalhes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`detalhes`)),
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `codigo` (`codigo`),
+  UNIQUE KEY `codigo_2` (`codigo`),
+  UNIQUE KEY `codigo_3` (`codigo`),
+  KEY `cliente_id` (`cliente_id`),
+  CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pedidos`
+--
+
+LOCK TABLES `pedidos` WRITE;
+/*!40000 ALTER TABLE `pedidos` DISABLE KEYS */;
+INSERT INTO `pedidos` VALUES
+(17,'178937',15,'torta','\"y\"','2024-12-26 18:28:27');
+/*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -95,4 +120,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-12-26 11:21:59
+-- Dump completed on 2024-12-26 17:39:25
