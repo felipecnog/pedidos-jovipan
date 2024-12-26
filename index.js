@@ -5,6 +5,7 @@ const usuariosRouter = require('./routes/usuarios');
 const cadastroRouter = require('./routes/cadastro');
 const loginRouter = require('./routes/login');
 const clientesRouter = require('./routes/clientes');
+const pedidosRouter = require('./routes/pedidos');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/usuarios', usuariosRouter);
 app.use('/cadastro', cadastroRouter);
 app.use('/login', loginRouter);
 app.use('/clientes', clientesRouter);
+app.use('/pedidos', pedidosRouter);
 
 // Inicia o servidor
 const PORT = process.env.PORT || 3000;
