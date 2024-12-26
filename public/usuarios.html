@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        .containerJ {
+            max-width: 50%;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-label {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .form-control, .form-select {
+            border-radius: 4px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header></header>
+    <div class="container containerJ">
+        <h1 class="mb-4 text-center">Usuários Cadastrados</h1>
+        <div id="message"></div>
+        <table class="table table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="usuariosTable">
+                <!-- Usuários serão inseridos aqui dinamicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal de edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <div class="mb-3">
+                            <label for="editNome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="editNome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCategoria" class="form-label">Categoria</label>
+                            <select class="form-select" id="editCategoria">
+                                <option value="administrador">Administrador</option>
+                                <option value="utilizador">Utilizador</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function fetchUsuarios() {
+            const response = await fetch('/usuarios');
+            const usuarios = await response.json();
+            const usuariosTable = document.getElementById('usuariosTable');
+            usuariosTable.innerHTML = usuarios.map(usuario => `
+                <tr>
+                    <td>${usuario.id}</td>
+                    <td>${usuario.nome}</td>
+                    <td>${usuario.categoria}</td>
+                    <td>${usuario.status}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="openEditModal(${usuario.id}, '${usuario.nome}', '${usuario.categoria}')"><i class="bi bi-pen"></i> Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUsuario(${usuario.id})"><i class="bi bi-trash"></i> Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openEditModal(id, nome, categoria) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editCategoria').value = categoria;
+            const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        }
+
+        async function deleteUsuario(id) {
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                const response = await fetch(`/usuarios/${id}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                    fetchUsuarios();
+                } else {
+                    alert(data.error);
+                }
+            }
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const nome = document.getElementById('editNome').value;
+            const categoria = document.getElementById('editCategoria').value;
+
+            const response = await fetch(`/usuarios/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, categoria })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                editModal.hide();
+                fetchUsuarios();
+            } else {
+                alert(data.error);
+            }
+        });
+
+        // Inicializa a tabela de usuários ao carregar a página
+        fetchUsuarios();
+    </script>
+    <script>
+        async function loadComponent(selector, file) {
+            const element = document.querySelector(selector);
+            if (element) {
+                const response = await fetch(file);
+                const content = await response.text();
+                element.innerHTML = content;
+            }
+        }
+    
+        // Carregar o header e o footer
+        loadComponent('header', '/components/header.html');
+        loadComponent('footer', '/components/footer.html');
+    </script>
+    
+</body>
+</html>

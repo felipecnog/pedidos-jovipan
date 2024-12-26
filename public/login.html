@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- Link para o CSS do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Bem-vindo</h2>
+        <form id="formLogin">
+            <!-- Campo Nome -->
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome de Usuário</label>
+                <input type="text" id="nome" name="nome" class="form-control" placeholder="Digite seu nome" required>
+            </div>
+
+            <!-- Campo Senha -->
+            <div class="mb-3">
+                <label for="senha" class="form-label">Senha</label>
+                <input type="password" id="senha" name="senha" class="form-control" placeholder="Digite sua senha" required>
+            </div>
+
+            <!-- Mensagem de erro -->
+            <div id="errorMessages" class="alert alert-danger" role="alert">
+                Erro no login. Verifique suas credenciais.
+            </div>
+
+            <!-- Botão Login -->
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+    </div>
+
+    <!-- Link para o JS do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Captura o envio do formulário
+        document.getElementById("formLogin").addEventListener("submit", async function (e) {
+            e.preventDefault(); // Impede o envio do formulário
+
+            const nome = document.getElementById("nome").value;
+            const senha = document.getElementById("senha").value;
+
+            // Limpa mensagens de erro anteriores
+            const errorMessages = document.getElementById("errorMessages");
+            errorMessages.style.display = "none";
+
+            // Envia os dados via Fetch API
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ nome, senha }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Redireciona para a página inicial após login bem-sucedido
+                window.location.href = "/usuarios.html";
+            } else {
+                // Exibe a mensagem de erro
+                errorMessages.style.display = "block";
+                errorMessages.textContent = data.message || "Erro no login. Tente novamente.";
+            }
+        });
+    </script>
+</body>
+
+</html>
