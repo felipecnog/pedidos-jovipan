@@ -27,9 +27,6 @@ app.use(express.static(path.join(__dirname, 'public/components')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-console.log('Usuarios Router:', usuariosRouter);
-
-
 // Rota GET para a raiz (retorna login.html)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));

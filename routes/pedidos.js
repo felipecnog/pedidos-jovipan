@@ -29,19 +29,19 @@ async function gerarCodigoUnico() {
 }
 
 // Função auxiliar para salvar o pedido no banco de dados
-async function salvarPedido(clienteId, produto, detalhes) {
+async function salvarPedido(clienteId, envio, observacoes) {
     try {
         // Gera o código único para o pedido
         const codigo = await gerarCodigoUnico();
 
         // Insere o pedido no banco de dados
         const query = `
-            INSERT INTO pedidos (cliente_id, produto, detalhes, codigo, created_at) 
+            INSERT INTO pedidos (cliente_id, envio, observacoes, codigo, created_at) 
             VALUES (?, ?, ?, ?, NOW())
         `;
-        const [result] = await db.execute(query, [clienteId, produto, JSON.stringify(detalhes), codigo]);
+        const [result] = await db.execute(query, [clienteId, envio, observacoes, codigo]);
 
-        return { id: result.insertId, clienteId, produto, detalhes, codigo };
+        return { id: result.insertId, clienteId, envio, observacoes, codigo };
     } catch (err) {
         console.error('Erro ao salvar pedido no banco de dados:', err.message);
         throw new Error('Erro ao salvar pedido no banco de dados.');
@@ -51,13 +51,13 @@ async function salvarPedido(clienteId, produto, detalhes) {
 // Rota POST - Criar Pedido
 router.post('/', async (req, res) => {
     try {
-        const { clienteId, produto, detalhes } = req.body;
+        const { clienteId, envio, observacoes } = req.body;
 
-        if (!clienteId || !produto || !detalhes) {
-            return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+        if (!clienteId || !envio) {
+            return res.status(400).json({ error: 'Os campos cliente e envio são obrigatórios.' });
         }
 
-        const pedido = await salvarPedido(clienteId, produto, detalhes);
+        const pedido = await salvarPedido(clienteId, envio, observacoes || null);
         res.status(201).json(pedido);
     } catch (err) {
         console.error('Erro ao processar pedido:', err.message);
@@ -72,9 +72,10 @@ router.get('/', async (req, res) => {
             SELECT 
                 pedidos.id, 
                 pedidos.codigo, 
-                pedidos.produto, 
-                pedidos.detalhes,
+                pedidos.envio, 
+                pedidos.observacoes,
                 pedidos.created_at, 
+                pedidos.status,
                 clientes.nome AS cliente_nome, 
                 clientes.telefone AS cliente_telefone,
                 clientes.endereco AS cliente_endereco 
@@ -91,6 +92,35 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+    try {
+        const query = `
+            SELECT 
+                pedidos.codigo,
+                pedidos.envio,
+                pedidos.observacoes,
+                pedidos.status,
+                pedidos.created_at,
+                clientes.nome AS cliente_nome,
+                clientes.telefone AS cliente_telefone,
+                clientes.endereco AS cliente_endereco
+            FROM pedidos
+            JOIN clientes ON pedidos.cliente_id = clientes.id
+            WHERE pedidos.codigo = ?;
+        `;
+        const [rows] = await db.execute(query, [codigo]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Pedido não encontrado.' });
+        }
+        res.json(rows[0]);
+    } catch (err) {
+        console.error('Erro ao buscar pedido:', err.message);
+        res.status(500).json({ error: 'Erro ao buscar pedido.' });
+    }
+});
+
+
 // Rota GET - Gerar Código Único
 router.get('/gerar-codigo', async (req, res) => {
     try {
@@ -106,12 +136,12 @@ router.get('/gerar-codigo', async (req, res) => {
 router.put(
     '/:id',
     [
-        body('produto').notEmpty().withMessage('Produto é obrigatório'),
-        body('detalhes').notEmpty().withMessage('Detalhes do pedido são obrigatórios'),
+        body('envio').notEmpty().withMessage('Envio é obrigatório'),
+        body('observacoes').optional(),
     ],
     async (req, res) => {
         const { id } = req.params;
-        const { produto, detalhes } = req.body;
+        const { envio, observacoes } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -121,10 +151,10 @@ router.put(
         try {
             const query = `
                 UPDATE pedidos 
-                SET produto = ?, detalhes = ? 
+                SET envio = ?, observacoes = ? 
                 WHERE id = ?
             `;
-            const [result] = await db.execute(query, [produto, JSON.stringify(detalhes), id]);
+            const [result] = await db.execute(query, [envio, observacoes, id]);
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Pedido não encontrado.' });
@@ -137,6 +167,69 @@ router.put(
         }
     }
 );
+router.put('/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+    const { envio, observacoes, status, produtos } = req.body;
+
+    try {
+        const query = `
+            UPDATE pedidos 
+            SET envio = ?, observacoes = ?, status = ?
+            WHERE codigo = ?
+        `;
+        await db.execute(query, [envio, observacoes, status, codigo]);
+
+        // Atualizar ou inserir os produtos associados
+        const deleteProdutosQuery = `DELETE FROM produtos_pedido WHERE pedido_codigo = ?`;
+        await db.execute(deleteProdutosQuery, [codigo]);
+
+        const insertProdutosQuery = `
+            INSERT INTO produtos_pedido (pedido_codigo, produto, detalhes) 
+            VALUES (?, ?, ?)
+        `;
+        for (const produto of produtos) {
+            await db.execute(insertProdutosQuery, [codigo, produto.produto, produto.detalhes]);
+        }
+
+        res.json({ message: 'Pedido atualizado com sucesso!' });
+    } catch (err) {
+        console.error('Erro ao atualizar pedido:', err.message);
+        res.status(500).json({ error: 'Erro ao atualizar pedido.' });
+    }
+});
+router.put('/:pedido_id', async (req, res) => {
+    const { pedido_id } = req.params;
+    const { envio, status, observacoes, produtos } = req.body;
+
+    try {
+        // Atualizar pedido
+        const updatePedidoQuery = `
+            UPDATE pedidos 
+            SET envio = ?, status = ?, observacoes = ? 
+            WHERE id = ?
+        `;
+        await db.execute(updatePedidoQuery, [envio, status, observacoes, pedido_id]);
+
+        // Remover produtos antigos
+        const deleteProdutosQuery = `DELETE FROM produtos_pedido WHERE pedido_id = ?`;
+        await db.execute(deleteProdutosQuery, [pedido_id]);
+
+        // Adicionar novos produtos
+        const insertProdutosQuery = `
+            INSERT INTO produtos_pedido (pedido_id, produto, detalhes) 
+            VALUES (?, ?, ?)
+        `;
+        for (const produto of produtos) {
+            await db.execute(insertProdutosQuery, [pedido_id, produto.produto, produto.detalhes]);
+        }
+
+        res.json({ message: 'Pedido atualizado com sucesso!' });
+    } catch (err) {
+        console.error('Erro ao atualizar pedido:', err.message);
+        res.status(500).json({ error: 'Erro ao atualizar pedido.' });
+    }
+});
+
 
 // Rota DELETE - Excluir Pedido
 router.delete('/:id', async (req, res) => {

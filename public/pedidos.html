@@ -21,20 +21,17 @@
 
                             </select>
                         </div>
-                        <!--<div class="mb-3">
-                            <label for="codigoPedido" class="form-label">Código do Pedido</label>
-                            <input type="text" id="codigoPedido" class="form-control" readonly>
-                        </div>-->
                         <div class="mb-3">
-                            <label for="produto" class="form-label">Produto</label>
-                            <select id="produto" class="form-select" required>
-                                <option value="torta">Torta</option>
-                                <!-- Adicione outros produtos aqui -->
+                            <label for="envio" class="form-label">Método de entrega</label>
+                            <select id="envio" class="form-select" required>
+                                <option selected>Selecione</option>
+                                <option value="envio">Enviar para cliente</option>
+                                <option value="retirada">Retirar na Loja</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="detalhesProduto" class="form-label">Detalhes do Produto</label>
-                            <textarea id="detalhesProduto" class="form-control" placeholder="Detalhes do produto (ex.: sabor, tamanho, etc.)" required></textarea>
+                            <label for="observacoes" class="form-label">Observação</label>
+                            <textarea id="observacoes" class="form-control" placeholder="Observações do pedido (ex.: tema, para cachorro etc.)" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100"><i class="bi bi-pencil"></i> Cadastrar Pedido</button>
                     </form>
@@ -51,7 +48,7 @@
                             <tr>
                                 <th>Número do Pedido</th>
                                 <th>Nome do Cliente</th>
-                                <!--<th>Produto</th>-->
+                                <th>Status</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -75,8 +72,8 @@
                     <p><strong>Telefone:</strong> <span id="viewTelefone"></span></p>
                     <p><strong>Endereço:</strong> <span id="viewEndereco"></span></p>
                     <hr>
-                    <p><strong>Produto:</strong> <span id="viewProduto"></span></p>
-                    <p><strong>Detalhes:</strong> <span id="viewDetalhesProduto"></span></p>
+                    <p><strong>Envio:</strong> <span id="viewEnvio"></span></p>
+                    <p><strong>Detalhes:</strong> <span id="viewObservacao"></span></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Fechar</button>
@@ -93,18 +90,26 @@
         let pedidos = [];
         let clientes = [];
 
+        async function carregarClientes() {
+            const response = await fetch('/clientes');
+            clientes = await response.json();
+
+            const clienteSelect = document.getElementById('cliente');
+            clienteSelect.innerHTML = clientes.map(cliente => `<option value="${cliente.id}">${cliente.nome}</option>`).join('');
+        }
+
         document.getElementById('formPedido').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const clienteId = document.getElementById('cliente').value;
-            const produto = document.getElementById('produto').value;
-            const detalhes = document.getElementById('detalhesProduto').value;
+            const envio = document.getElementById('envio').value;
+            const observacoes = document.getElementById('observacoes').value;
 
             try {
                 const response = await fetch('/pedidos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clienteId, produto, detalhes }),
+                    body: JSON.stringify({ clienteId, envio, observacoes }),
                 });
 
                 const data = await response.json();
@@ -139,7 +144,7 @@
             const pedidosFiltrados = pedidos.filter(pedido =>
                 pedido.codigo.toLowerCase().includes(termoBusca) ||
                 pedido.cliente_nome.toLowerCase().includes(termoBusca) ||
-                pedido.produto.toLowerCase().includes(termoBusca)
+                pedido.status.toLowerCase().includes(termoBusca)
             );
 
             pedidosFiltrados.forEach(pedido => {
@@ -153,6 +158,10 @@
                 tdCliente.textContent = pedido.cliente_nome || 'Cliente não encontrado';
                 tr.appendChild(tdCliente);
 
+                const tdStatus = document.createElement('td');
+                tdStatus.textContent = pedido.status || 'Status não encontrado';
+                tr.appendChild(tdStatus);
+
                 const tdAcoes = document.createElement('td');
                 tdAcoes.classList.add('d-flex', 'gap-2');
 
@@ -160,6 +169,10 @@
                 btnVisualizar.innerHTML = '<i class="bi bi-eye"></i> Visualizar';
                 btnVisualizar.classList.add('btn', 'btn-sm', 'btn-info');
                 btnVisualizar.addEventListener('click', () => abrirModalVisualizarPedido(pedido));
+
+                btnVisualizar.addEventListener('click', () => {
+            window.location.href = `/detalhes.html?codigo=${pedido.codigo}`;
+        });
 
                 const btnExcluir = document.createElement('button');
                 btnExcluir.innerHTML = '<i class="bi bi-trash"></i> Excluir';
@@ -174,26 +187,8 @@
             });
         }
 
-        function abrirModalVisualizarPedido(pedido) {
-            document.getElementById('viewCodigoPedido').textContent = pedido.codigo || 'Código não disponível';
-            document.getElementById('viewCriado').textContent = pedido.created_at || 'Data da criação não disponível';
-            document.getElementById('viewCliente').textContent = pedido.cliente_nome || 'Cliente não encontrado';
-            document.getElementById('viewTelefone').textContent = pedido.cliente_telefone || 'Telefone não informado';
-            document.getElementById('viewEndereco').textContent = pedido.cliente_endereco || 'Endereço não informado';
-            document.getElementById('viewProduto').textContent = pedido.produto || 'Produto não informado';
-            document.getElementById('viewDetalhesProduto').textContent = pedido.detalhes || 'Detalhes não fornecidos';
+        console.log(exibirPedidos)
 
-            const modal = new bootstrap.Modal(document.getElementById('modalVisualizarPedido'));
-            modal.show();
-        }
-
-        async function carregarClientes() {
-            const response = await fetch('/clientes');
-            clientes = await response.json();
-
-            const clienteSelect = document.getElementById('cliente');
-            clienteSelect.innerHTML = clientes.map(cliente => `<option value="${cliente.id}">${cliente.nome}</option>`).join('');
-        }
 
         document.getElementById('search').addEventListener('input', () => exibirPedidos());
         carregarClientes();
@@ -209,25 +204,25 @@
         }
 
        
-        async function salvarPedido(clienteId, produto, detalhes) {
+        async function salvarPedido(clienteId, envio, observacoes) {
             try {
                 // Gera um código único
                 const codigo = await gerarCodigoUnico();
 
                 // Certifique-se de que os dados estão completos
-                if (!clienteId || !produto || !detalhes || !codigo) {
+                if (!clienteId || !envio || !observacoes || !codigo) {
                     throw new Error('Dados incompletos para salvar o pedido.');
                 }
 
                 // Insere o pedido no banco de dados
                 const query = `
-                    INSERT INTO pedidos (cliente_id, produto, detalhes, codigo, created_at) 
+                    INSERT INTO pedidos (cliente_id, envio, observacoes, codigo, created_at) 
                     VALUES (?, ?, ?, ?, NOW())
                 `;
-                const [result] = await db.execute(query, [clienteId, produto, JSON.stringify(detalhes), codigo]);
+                const [result] = await db.execute(query, [clienteId, envio, JSON.stringify(observacoes), codigo]);
 
                 console.log(`Pedido salvo com sucesso: Código ${codigo}`);
-                return { id: result.insertId, clienteId, produto, detalhes, codigo };
+                return { id: result.insertId, clienteId, envio, observacoes, codigo };
             } catch (err) {
                 console.error('Erro ao salvar pedido no banco de dados:', err.message);
                 throw new Error('Erro ao salvar pedido no banco de dados.');
