@@ -59,14 +59,14 @@ CREATE TABLE `pedidos` (
   `envio` varchar(100) DEFAULT NULL,
   `observacoes` longtext DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `status` enum('em preparação','finalizado','enviado','concluído') NOT NULL DEFAULT 'em preparação',
+  `status` enum('feito','em preparação','finalizado','enviado','concluído') NOT NULL DEFAULT 'feito',
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`),
   UNIQUE KEY `codigo_2` (`codigo`),
   UNIQUE KEY `codigo_3` (`codigo`),
   KEY `cliente_id` (`cliente_id`),
   CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,11 +76,39 @@ CREATE TABLE `pedidos` (
 LOCK TABLES `pedidos` WRITE;
 /*!40000 ALTER TABLE `pedidos` DISABLE KEYS */;
 INSERT INTO `pedidos` VALUES
-(22,'307511',15,'envio',NULL,'2024-12-27 14:47:20','em preparação'),
-(23,'892844',15,'retirada','fff','2024-12-27 14:53:18','em preparação'),
-(24,'835326',15,'envio','cachorro','2024-12-27 15:24:45','em preparação'),
-(25,'419396',16,'retirada','e','2024-12-27 16:19:45','em preparação');
+(25,'419396',16,'retirada','e','2024-12-27 16:19:45','em preparação'),
+(27,'281187',15,'envio','teste','2024-12-29 15:58:53','em preparação'),
+(28,'895459',16,'envio','teste','2024-12-29 17:00:10','feito'),
+(29,'393327',15,'envio',NULL,'2024-12-29 17:06:38','feito');
 /*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `produtos`
+--
+
+DROP TABLE IF EXISTS `produtos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `produtos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `variacoes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`variacoes`)),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `produtos`
+--
+
+LOCK TABLES `produtos` WRITE;
+/*!40000 ALTER TABLE `produtos` DISABLE KEYS */;
+INSERT INTO `produtos` VALUES
+(5,'Salgado','2024-12-30 10:24:54','[\"Coxinha\",\"Canudinho\",\"Pastel de Queijo\",\"Pastel de Carne\",\"Risole\",\"Travisseirinho\",\"Empada\"]'),
+(7,'torta','2024-12-30 11:36:14','[\"Morango\"]');
+/*!40000 ALTER TABLE `produtos` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -92,13 +120,13 @@ DROP TABLE IF EXISTS `produtos_pedido`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `produtos_pedido` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `pedido_id` int(11) NOT NULL,
+  `pedido_codigo` varchar(12) DEFAULT NULL,
   `produto` varchar(100) NOT NULL,
-  `detalhes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`detalhes`)),
+  `detalhes` longtext DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `pedido_id` (`pedido_id`),
-  CONSTRAINT `produtos_pedido_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+  KEY `pedido_codigo` (`pedido_codigo`),
+  CONSTRAINT `produtos_pedido_ibfk_1` FOREIGN KEY (`pedido_codigo`) REFERENCES `pedidos` (`codigo`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -108,15 +136,11 @@ CREATE TABLE `produtos_pedido` (
 LOCK TABLES `produtos_pedido` WRITE;
 /*!40000 ALTER TABLE `produtos_pedido` DISABLE KEYS */;
 INSERT INTO `produtos_pedido` VALUES
-(1,24,'torta','[\"Maracujá\"]'),
-(2,24,'cento_salgados','[\"Coxinha\",\"Canudinho\"]'),
-(3,25,'torta','[\"Maracujá\"]'),
-(4,26,'torta','[]'),
-(5,27,'torta','[]'),
-(6,28,'torta','[]'),
-(7,29,'torta','[]'),
-(8,28,'cento_salgados','[]'),
-(9,29,'cento_salgados','[]');
+(3,'419396','torta','[\"Maracujá\"]'),
+(10,'281187','teste','teste'),
+(13,'281187','teste2','teste2'),
+(15,'895459','teste','teste'),
+(16,'895459','teste4','teste4');
 /*!40000 ALTER TABLE `produtos_pedido` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -151,6 +175,33 @@ INSERT INTO `usuarios` VALUES
 (36,'felipe5','$2b$10$nk.96t7oCqbnT1Pr6mf3huuRXjiT7oInFQ0klNoC0DvRg97Cpsr9W','ativo','administrador');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `variacoes`
+--
+
+DROP TABLE IF EXISTS `variacoes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `variacoes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `produto_id` int(11) NOT NULL,
+  `variacao` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `produto_id` (`produto_id`),
+  CONSTRAINT `variacoes_ibfk_1` FOREIGN KEY (`produto_id`) REFERENCES `produtos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `variacoes`
+--
+
+LOCK TABLES `variacoes` WRITE;
+/*!40000 ALTER TABLE `variacoes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `variacoes` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -161,4 +212,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-12-27 13:23:52
+-- Dump completed on 2024-12-30  8:43:41
