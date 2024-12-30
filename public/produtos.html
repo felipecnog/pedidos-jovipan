@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Produtos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header></header>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-4">
+                <div class="containerJ">
+                    <h1>Cadastro</h1>
+                    <form id="formProduto">
+                        <div class="mb-3">
+                            <label for="nomeProduto" class="form-label">Nome do Produto</label>
+                            <input type="text" id="nomeProduto" class="form-control" placeholder="Digite o nome do produto" required>
+                        </div>
+                        <div id="variacoesContainer" class="mb-3">
+                            <label class="form-label">Variações do Produto</label>
+                        </div>
+                        <button type="button" id="adicionarVariacao" class="btn btn-secondary mb-3">Adicionar Variação</button>
+                        <button type="submit" class="btn btn-primary mb-3">Salvar Produto</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-8">
+                <div class="containerJ">
+                    <h1 class="text-center">Produtos</h1>
+                    <div class="mb-3">
+                        <input type="text" id="searchProduto" class="form-control" placeholder="Buscar por nome do produto ou variação">
+                    </div>
+                    <table class="table table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Variações</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaProdutos">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Produto -->
+    <div class="modal fade" id="modalEditarProduto" tabindex="-1" aria-labelledby="modalEditarProdutoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarProdutoLabel">Editar Produto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="produtoId">
+                    <div class="mb-3">
+                        <label for="produtoNome" class="form-label">Nome do Produto</label>
+                        <input type="text" class="form-control" id="produtoNome">
+                    </div>
+                    <div class="mb-3">
+                        <label for="novaVariacao" class="form-label">Nova Variação</label>
+                        <input type="text" class="form-control" id="novaVariacao">
+                        <button type="button" id="btnAdicionarVariacao" class="btn btn-secondary mt-2">Adicionar Variação</button>
+                    </div>
+                    <ul class="list-group" id="listaVariacoes"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" id="btnSalvarAlteracoes" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let produtos = [];
+
+        document.getElementById('adicionarVariacao').addEventListener('click', () => {
+            const variacoesContainer = document.getElementById('variacoesContainer');
+            const variacaoDiv = document.createElement('div');
+            variacaoDiv.classList.add('mb-2', 'd-flex', 'align-items-center');
+            variacaoDiv.innerHTML = `
+                <input type="text" class="form-control variacao-nome" placeholder="Digite a variação">
+                <button type="button" class="btn btn-danger ms-2 btn-remover-variacao">Remover</button>
+            `;
+            variacaoDiv.querySelector('.btn-remover-variacao').addEventListener('click', () => {
+                variacaoDiv.remove();
+            });
+            variacoesContainer.appendChild(variacaoDiv);
+        });
+
+        async function carregarProdutos() {
+            try {
+                const response = await fetch('/produtos');
+                if (!response.ok) throw new Error('Erro ao carregar produtos.');
+
+                produtos = await response.json();
+                exibirProdutos();
+            } catch (err) {
+                console.error('Erro ao carregar produtos:', err.message);
+            }
+        }
+
+        function exibirProdutos() {
+            const termoBusca = document.getElementById('searchProduto').value.toLowerCase();
+            const produtosFiltrados = produtos.filter(produto => {
+                const variacoes = JSON.parse(produto.variacoes || '[]').join(', ').toLowerCase();
+                return (
+                    produto.nome.toLowerCase().includes(termoBusca) ||
+                    variacoes.includes(termoBusca)
+                );
+            });
+
+            const listaProdutos = document.getElementById('listaProdutos');
+            listaProdutos.innerHTML = '';
+
+            produtosFiltrados.forEach(produto => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-2">${produto.nome}</td>
+                    <td class="col-8">${produto.variacoes ? JSON.parse(produto.variacoes).join(', ') : ''}</td>
+                    <td class="col-2">
+                        <button type="button" class="btn btn-warning btn-sm" onclick="abrirModalEditarProduto(${produto.id})">Editar</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="excluirProduto(${produto.id})">Excluir</button>
+                    </td>
+                `;
+                listaProdutos.appendChild(tr);
+            });
+        }
+
+        async function excluirProduto(id) {
+            if (!confirm('Deseja excluir este produto?')) return;
+
+            try {
+                const response = await fetch(`/produtos/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Erro ao excluir produto.');
+
+                alert('Produto excluído com sucesso!');
+                carregarProdutos();
+            } catch (err) {
+                console.error('Erro ao excluir produto:', err.message);
+                alert('Erro ao excluir produto.');
+            }
+        }
+
+        async function abrirModalEditarProduto(id) {
+            try {
+                const response = await fetch(`/produtos/${id}`);
+                if (!response.ok) throw new Error('Erro ao buscar produto.');
+
+                const produto = await response.json();
+
+                document.getElementById('produtoNome').value = produto.nome;
+                document.getElementById('produtoId').value = id;
+
+                const listaVariacoes = document.getElementById('listaVariacoes');
+                listaVariacoes.innerHTML = '';
+                JSON.parse(produto.variacoes).forEach((variacao) => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <span>${variacao}</span>
+                        <button type="button" class="btn btn-sm btn-danger">Excluir</button>
+                    `;
+                    li.querySelector('button').addEventListener('click', () => li.remove());
+                    listaVariacoes.appendChild(li);
+                });
+
+                const modal = new bootstrap.Modal(document.getElementById('modalEditarProduto'));
+                modal.show();
+
+                document.getElementById('btnAdicionarVariacao').onclick = adicionarVariacao;
+                document.getElementById('btnSalvarAlteracoes').onclick = salvarAlteracoesProduto;
+            } catch (err) {
+                console.error('Erro ao abrir modal:', err.message);
+                alert('Erro ao carregar os dados do produto.');
+            }
+        }
+
+        function adicionarVariacao() {
+            const novaVariacao = document.getElementById('novaVariacao').value.trim();
+            if (!novaVariacao) {
+                alert('A variação não pode estar vazia.');
+                return;
+            }
+
+            const listaVariacoes = document.getElementById('listaVariacoes');
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <span>${novaVariacao}</span>
+                <button type="button" class="btn btn-sm btn-danger">Excluir</button>
+            `;
+            li.querySelector('button').addEventListener('click', () => li.remove());
+            listaVariacoes.appendChild(li);
+
+            document.getElementById('novaVariacao').value = '';
+        }
+
+        async function salvarAlteracoesProduto() {
+            const produtoId = document.getElementById('produtoId').value;
+            const produtoNome = document.getElementById('produtoNome').value.trim();
+
+            if (!produtoNome) {
+                alert('O nome do produto não pode estar vazio.');
+                return;
+            }
+
+            const variacoes = Array.from(document.getElementById('listaVariacoes').children).map(li => {
+                return li.querySelector('span').textContent.trim();
+            });
+
+            try {
+                const response = await fetch(`/produtos/${produtoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: produtoNome, variacoes }),
+                });
+
+                if (!response.ok) throw new Error('Erro ao atualizar produto.');
+
+                alert('Produto atualizado com sucesso!');
+                carregarProdutos();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarProduto'));
+                modal.hide();
+            } catch (err) {
+                console.error('Erro ao salvar alterações:', err.message);
+                alert('Erro ao salvar alterações.');
+            }
+        }
+
+        document.getElementById('formProduto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nome = document.getElementById('nomeProduto').value;
+            const variacoes = Array.from(document.querySelectorAll('.variacao-nome'))
+                .map(input => input.value)
+                .filter(variacao => variacao.trim() !== '');
+
+            if (!nome || variacoes.length === 0) {
+                alert('Por favor, preencha o nome do produto e pelo menos uma variação.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/produtos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, variacoes }),
+                });
+
+                if (!response.ok) throw new Error('Erro ao cadastrar produto.');
+
+                alert('Produto cadastrado com sucesso!');
+                carregarProdutos();
+                document.getElementById('formProduto').reset();
+                document.getElementById('variacoesContainer').innerHTML = '';
+            } catch (err) {
+                console.error('Erro ao cadastrar produto:', err.message);
+                alert('Erro ao cadastrar produto.');
+            }
+        });
+
+        document.getElementById('searchProduto').addEventListener('input', exibirProdutos);
+
+        carregarProdutos();
+
+        async function loadComponent(selector, file) {
+            const element = document.querySelector(selector);
+            if (element) {
+                const response = await fetch(file);
+                const content = await response.text();
+                element.innerHTML = content;
+            }
+        }
+
+        loadComponent('header', '/components/header.html');
+        loadComponent('footer', '/components/footer.html');
+    </script>
+</body>
+</html>

@@ -31,7 +31,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="observacoes" class="form-label">Observação</label>
-                            <textarea id="observacoes" class="form-control" placeholder="Observações do pedido (ex.: tema, para cachorro etc.)" required></textarea>
+                            <textarea id="observacoes" class="form-control" placeholder="Observações do pedido (ex.: tema, para cachorro etc.)"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100"><i class="bi bi-pencil"></i> Cadastrar Pedido</button>
                     </form>
@@ -43,11 +43,11 @@
                     <div class="mb-3">
                         <input type="text" id="search" class="form-control" placeholder="Buscar por código, cliente ou produto">
                     </div>
-                    <table class="table table-striped">
+                    <table class="table table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th>Número do Pedido</th>
-                                <th>Nome do Cliente</th>
+                                <th>Pedido</th>
+                                <th>Cliente</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -56,29 +56,6 @@
                     </table>
                     <div id="paginacao" class="d-flex justify-content-center my-3"></div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Visualizar Pedido -->
-    <div class="modal fade" id="modalVisualizarPedido" tabindex="-1" aria-labelledby="modalVisualizarPedidoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <p><h5>Pedido nº: <span id="viewCodigoPedido"></span></h5>
-                    <h6>Criado em: <span id="viewCriado"></span></h6></p>
-                    <hr>
-                    <p><strong>Cliente:</strong> <span id="viewCliente"></span></p>
-                    <p><strong>Telefone:</strong> <span id="viewTelefone"></span></p>
-                    <p><strong>Endereço:</strong> <span id="viewEndereco"></span></p>
-                    <hr>
-                    <p><strong>Envio:</strong> <span id="viewEnvio"></span></p>
-                    <p><strong>Detalhes:</strong> <span id="viewObservacao"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Fechar</button>
-                    <button type="button" class="btn btn-primary"><i class="bi bi-printer"></i> Imprimir pedido</button>
-                  </div>
             </div>
         </div>
     </div>
@@ -143,8 +120,8 @@
             const termoBusca = document.getElementById('search').value.toLowerCase();
             const pedidosFiltrados = pedidos.filter(pedido =>
                 pedido.codigo.toLowerCase().includes(termoBusca) ||
-                pedido.cliente_nome.toLowerCase().includes(termoBusca) ||
-                pedido.status.toLowerCase().includes(termoBusca)
+                pedido.cliente_nome.toLowerCase().includes(termoBusca)
+                //pedido.status.toLowerCase().includes(termoBusca)
             );
 
             pedidosFiltrados.forEach(pedido => {
@@ -152,30 +129,31 @@
 
                 const tdCodigo = document.createElement('td');
                 tdCodigo.textContent = pedido.codigo;
+                tdCodigo.classList.add('col-2');
                 tr.appendChild(tdCodigo);
 
                 const tdCliente = document.createElement('td');
                 tdCliente.textContent = pedido.cliente_nome || 'Cliente não encontrado';
+                tdCliente.classList.add('col-6');
                 tr.appendChild(tdCliente);
 
                 const tdStatus = document.createElement('td');
                 tdStatus.textContent = pedido.status || 'Status não encontrado';
+                tdStatus.classList.add('col-2');
                 tr.appendChild(tdStatus);
 
                 const tdAcoes = document.createElement('td');
-                tdAcoes.classList.add('d-flex', 'gap-2');
+                tdAcoes.classList.add('d-flex', 'gap-1', 'col-2');
 
                 const btnVisualizar = document.createElement('button');
-                btnVisualizar.innerHTML = '<i class="bi bi-eye"></i> Visualizar';
+                btnVisualizar.innerHTML = 'Visualizar';
                 btnVisualizar.classList.add('btn', 'btn-sm', 'btn-info');
-                btnVisualizar.addEventListener('click', () => abrirModalVisualizarPedido(pedido));
-
                 btnVisualizar.addEventListener('click', () => {
-            window.location.href = `/detalhes.html?codigo=${pedido.codigo}`;
-        });
+                    window.location.href = `/detalhes.html?codigo=${pedido.codigo}`;
+                });
 
                 const btnExcluir = document.createElement('button');
-                btnExcluir.innerHTML = '<i class="bi bi-trash"></i> Excluir';
+                btnExcluir.innerHTML = 'Excluir';
                 btnExcluir.classList.add('btn', 'btn-sm', 'btn-danger');
                 btnExcluir.addEventListener('click', () => excluirPedido(pedido.id));
 
@@ -187,22 +165,9 @@
             });
         }
 
-        console.log(exibirPedidos)
-
-
         document.getElementById('search').addEventListener('input', () => exibirPedidos());
         carregarClientes();
         carregarPedidos();
-
-        async function loadComponent(selector, file) {
-            const element = document.querySelector(selector);
-            if (element) {
-                const response = await fetch(file);
-                const content = await response.text();
-                element.innerHTML = content;
-            }
-        }
-
        
         async function salvarPedido(clienteId, envio, observacoes) {
             try {
@@ -248,6 +213,14 @@
             }
         }
 
+        async function loadComponent(selector, file) {
+            const element = document.querySelector(selector);
+            if (element) {
+                const response = await fetch(file);
+                const content = await response.text();
+                element.innerHTML = content;
+            }
+        }
         // Carregar o header e o footer
         loadComponent('header', '/components/header.html');
         loadComponent('footer', '/components/footer.html');

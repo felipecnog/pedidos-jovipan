@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Rota GET - Listar Pedidos
+// Rota GET - Listar Pedidos em pedidos.html
 router.get('/', async (req, res) => {
     try {
         const query = `
@@ -91,7 +91,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Erro ao listar pedidos.' });
     }
 });
-
+// Rota GET - Listar Pedidos em detalhes.html
 router.get('/:codigo', async (req, res) => {
     const { codigo } = req.params;
     try {
@@ -133,102 +133,47 @@ router.get('/gerar-codigo', async (req, res) => {
 });
 
 // Rota PUT - Atualizar Pedido
-router.put(
-    '/:id',
-    [
-        body('envio').notEmpty().withMessage('Envio é obrigatório'),
-        body('observacoes').optional(),
-    ],
-    async (req, res) => {
-        const { id } = req.params;
-        const { envio, observacoes } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        try {
-            const query = `
-                UPDATE pedidos 
-                SET envio = ?, observacoes = ? 
-                WHERE id = ?
-            `;
-            const [result] = await db.execute(query, [envio, observacoes, id]);
-
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'Pedido não encontrado.' });
-            }
-
-            res.json({ message: 'Pedido atualizado com sucesso!' });
-        } catch (err) {
-            console.error('Erro ao atualizar pedido:', err.message);
-            res.status(500).json({ error: 'Erro ao atualizar pedido.' });
-        }
-    }
-);
-router.put('/:codigo', async (req, res) => {
-    const { codigo } = req.params;
-    const { envio, observacoes, status, produtos } = req.body;
-
-    try {
-        const query = `
-            UPDATE pedidos 
-            SET envio = ?, observacoes = ?, status = ?
-            WHERE codigo = ?
-        `;
-        await db.execute(query, [envio, observacoes, status, codigo]);
-
-        // Atualizar ou inserir os produtos associados
-        const deleteProdutosQuery = `DELETE FROM produtos_pedido WHERE pedido_codigo = ?`;
-        await db.execute(deleteProdutosQuery, [codigo]);
-
-        const insertProdutosQuery = `
-            INSERT INTO produtos_pedido (pedido_codigo, produto, detalhes) 
-            VALUES (?, ?, ?)
-        `;
-        for (const produto of produtos) {
-            await db.execute(insertProdutosQuery, [codigo, produto.produto, produto.detalhes]);
-        }
-
-        res.json({ message: 'Pedido atualizado com sucesso!' });
-    } catch (err) {
-        console.error('Erro ao atualizar pedido:', err.message);
-        res.status(500).json({ error: 'Erro ao atualizar pedido.' });
-    }
-});
 router.put('/:pedido_id', async (req, res) => {
     const { pedido_id } = req.params;
     const { envio, status, observacoes, produtos } = req.body;
 
     try {
-        // Atualizar pedido
+        // Atualizar os dados do pedido
         const updatePedidoQuery = `
             UPDATE pedidos 
             SET envio = ?, status = ?, observacoes = ? 
-            WHERE id = ?
+            WHERE codigo = ?
         `;
         await db.execute(updatePedidoQuery, [envio, status, observacoes, pedido_id]);
 
-        // Remover produtos antigos
-        const deleteProdutosQuery = `DELETE FROM produtos_pedido WHERE pedido_id = ?`;
-        await db.execute(deleteProdutosQuery, [pedido_id]);
-
-        // Adicionar novos produtos
-        const insertProdutosQuery = `
-            INSERT INTO produtos_pedido (pedido_id, produto, detalhes) 
-            VALUES (?, ?, ?)
+        // Atualizar ou adicionar produtos
+        const insertOrUpdateProdutoQuery = `
+            INSERT INTO produtos_pedido (id, pedido_codigo, produto, detalhes)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE produto = VALUES(produto), detalhes = VALUES(detalhes)
         `;
         for (const produto of produtos) {
-            await db.execute(insertProdutosQuery, [pedido_id, produto.produto, produto.detalhes]);
+            const { id, produto: nomeProduto, detalhes } = produto;
+
+            // Garante que o campo detalhes nunca será nulo
+            const detalhesCorrigido = detalhes || '';
+
+            await db.execute(insertOrUpdateProdutoQuery, [
+                id || null, // ID é nulo para novos produtos
+                pedido_id,
+                nomeProduto,
+                detalhesCorrigido,
+            ]);
         }
 
-        res.json({ message: 'Pedido atualizado com sucesso!' });
+        res.json({ message: 'Pedido e produtos atualizados com sucesso!' });
     } catch (err) {
-        console.error('Erro ao atualizar pedido:', err.message);
-        res.status(500).json({ error: 'Erro ao atualizar pedido.' });
+        console.error('Erro ao atualizar pedido e produtos:', err.message);
+        res.status(500).json({ error: 'Erro ao atualizar pedido e produtos.' });
     }
 });
+
+
 
 
 // Rota DELETE - Excluir Pedido
@@ -249,8 +194,38 @@ router.delete('/:id', async (req, res) => {
         res.json({ message: 'Pedido excluído com sucesso!' });
     } catch (err) {
         console.error('Erro ao excluir pedido:', err.message);
+        res.status(500).json({ error: 'Antes de excluir o pedido, exclua os produtos' });
+    }
+});
+
+router.delete('/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+
+    try {
+        // Excluir os produtos associados ao pedido
+        const deleteProdutosQuery = `
+            DELETE FROM produtos_pedido 
+            WHERE pedido_codigo = ?
+        `;
+        await db.execute(deleteProdutosQuery, [codigo]);
+
+        // Excluir o pedido
+        const deletePedidoQuery = `
+            DELETE FROM pedidos 
+            WHERE codigo = ?
+        `;
+        const [result] = await db.execute(deletePedidoQuery, [codigo]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Pedido não encontrado.' });
+        }
+
+        res.json({ message: 'Pedido excluído com sucesso!' });
+    } catch (err) {
+        console.error('Erro ao excluir pedido:', err.message);
         res.status(500).json({ error: 'Erro ao excluir pedido.' });
     }
 });
+
 
 module.exports = router;

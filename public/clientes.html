@@ -37,7 +37,7 @@
                     <div class="mb-3">
                         <input type="text" id="search" class="form-control" placeholder="Pesquisar por nome ou telefone">
                     </div>
-                    <table class="table table-striped">
+                    <table class="table table-striped align-middle">
                         <thead class="table-dark">
                             <tr>
                                 <th>Nome do Cliente</th>
@@ -177,27 +177,29 @@
 
                 const tdNome = document.createElement('td');
                 tdNome.textContent = cliente.nome;
+                tdNome.classList.add('col-6');
                 tr.appendChild(tdNome);
 
                 const tdTelefone = document.createElement('td');
                 tdTelefone.textContent = cliente.telefone;
+                tdTelefone.classList.add('col-3');
                 tr.appendChild(tdTelefone);
 
                 const tdAcoes = document.createElement('td');
-                tdAcoes.classList.add('d-flex', 'gap-2');
+                tdAcoes.classList.add('d-flex','gap-1','col-3');
 
                 const btnVisualizar = document.createElement('button');
-                btnVisualizar.innerHTML = '<i class="bi bi-eye"></i> Visualizar';
+                btnVisualizar.innerHTML = 'Visualizar';
                 btnVisualizar.classList.add('btn', 'btn-sm', 'btn-info');
                 btnVisualizar.addEventListener('click', () => abrirModalVisualizar(cliente));
 
                 const btnEditar = document.createElement('button');
-                btnEditar.innerHTML = '<i class="bi bi-pencil"></i> Editar';
+                btnEditar.innerHTML = 'Editar';
                 btnEditar.classList.add('btn', 'btn-sm', 'btn-warning');
                 btnEditar.addEventListener('click', () => abrirModalEdicao(cliente));
 
                 const btnExcluir = document.createElement('button');
-                btnExcluir.innerHTML = '<i class="bi bi-trash"></i> Excluir';
+                btnExcluir.innerHTML = 'Excluir';
                 btnExcluir.classList.add('btn', 'btn-sm', 'btn-danger');
                 btnExcluir.addEventListener('click', () => excluirCliente(cliente.id));
 
