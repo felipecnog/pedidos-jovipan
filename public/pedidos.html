@@ -48,6 +48,7 @@
                             <tr>
                                 <th>Pedido</th>
                                 <th>Cliente</th>
+                                <th>Telefone</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -120,8 +121,8 @@
             const termoBusca = document.getElementById('search').value.toLowerCase();
             const pedidosFiltrados = pedidos.filter(pedido =>
                 pedido.codigo.toLowerCase().includes(termoBusca) ||
-                pedido.cliente_nome.toLowerCase().includes(termoBusca)
-                //pedido.status.toLowerCase().includes(termoBusca)
+                pedido.cliente_nome.toLowerCase().includes(termoBusca) ||
+                pedido.cliente_telefone.toLowerCase().includes(termoBusca)
             );
 
             pedidosFiltrados.forEach(pedido => {
@@ -134,8 +135,13 @@
 
                 const tdCliente = document.createElement('td');
                 tdCliente.textContent = pedido.cliente_nome || 'Cliente não encontrado';
-                tdCliente.classList.add('col-6');
+                tdCliente.classList.add('col-4');
                 tr.appendChild(tdCliente);
+
+                const tdTelefone = document.createElement('td');
+                tdTelefone.textContent = pedido.cliente_telefone || 'Cliente não encontrado';
+                tdTelefone.classList.add('col-2');
+                tr.appendChild(tdTelefone);
 
                 const tdStatus = document.createElement('td');
                 tdStatus.textContent = pedido.status || 'Status não encontrado';
