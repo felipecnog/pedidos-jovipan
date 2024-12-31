@@ -183,20 +183,57 @@ async function excluirProduto(produtoId) {
     }
 }
 
+async function carregarProdutosDisponiveis() {
+    try {
+        const response = await fetch('/produtos');
+        if (!response.ok) throw new Error('Erro ao carregar produtos disponíveis.');
 
+        return await response.json();
+    } catch (err) {
+        console.error('Erro ao carregar produtos disponíveis:', err.message);
+        alert('Erro ao carregar produtos disponíveis.');
+        return [];
+    }
+}
 
-document.getElementById('adicionarProduto').addEventListener('click', () => {
+document.getElementById('adicionarProduto').addEventListener('click', async () => {
     const produtosContainer = document.getElementById('produtosContainer');
     const produtoDiv = document.createElement('div');
     produtoDiv.classList.add('mb-3', 'produto-item');
-    produtoDiv.setAttribute('data-id', ''); // Produto novo, sem ID
+
+    const produtosDisponiveis = await carregarProdutosDisponiveis();
+
     produtoDiv.innerHTML = `
         <label class="form-label">Produto</label>
-        <input type="text" class="form-control mb-2 produto-nome" placeholder="Nome do Produto">
-        <label class="form-label">Detalhes</label>
-        <textarea class="form-control produto-detalhes" placeholder="Ex.: Sabor, Tamanho"></textarea>
+        <select class="form-select produto-nome">
+            <option value="">Selecione um produto</option>
+            ${produtosDisponiveis.map(produto => `<option value="${produto.nome}">${produto.nome}</option>`).join('')}
+        </select>
+        <div class="form-check mt-2 variacoes-container">
+            <strong>Variações:</strong>
+        </div>
         <button type="button" class="btn btn-danger mt-2 btn-remover-produto">Remover Produto</button>
     `;
+
+    const selectProduto = produtoDiv.querySelector('.produto-nome');
+    const variacoesContainer = produtoDiv.querySelector('.variacoes-container');
+
+    selectProduto.addEventListener('change', () => {
+        const produtoSelecionado = produtosDisponiveis.find(prod => prod.nome === selectProduto.value);
+        if (produtoSelecionado && produtoSelecionado.variacoes) {
+            const variacoes = JSON.parse(produtoSelecionado.variacoes);
+            variacoesContainer.innerHTML = variacoes
+                .map(variacao => `
+                    <div>
+                        <input type="checkbox" class="form-check-input" value="${variacao}">
+                        <label class="form-check-label">${variacao}</label>
+                    </div>
+                `)
+                .join('');
+        } else {
+            variacoesContainer.innerHTML = '<p>Sem variações disponíveis.</p>';
+        }
+    });
 
     produtoDiv.querySelector('.btn-remover-produto').addEventListener('click', () => {
         produtoDiv.remove();
@@ -213,11 +250,17 @@ document.getElementById('formDetalhesPedido').addEventListener('submit', async (
     const status = document.getElementById('status').value;
     const observacoes = document.getElementById('observacoes').value;
 
-    const produtos = Array.from(document.querySelectorAll('.produto-item')).map(item => ({
-        id: item.getAttribute('data-id') || null, // ID do produto (null para novos produtos)
-        produto: item.querySelector('.produto-nome').value.trim(),
-        detalhes: item.querySelector('.produto-detalhes').value.trim() || '', // Garante que detalhes nunca será nulo
-    }));
+    const produtos = Array.from(document.querySelectorAll('.produto-item')).map(item => {
+        const produtoSelecionado = item.querySelector('.produto-nome').value;
+        const variacoesSelecionadas = Array.from(
+            item.querySelectorAll('.form-check-input:checked')
+        ).map(checkbox => checkbox.value);
+
+        return {
+            produto: produtoSelecionado,
+            detalhes: variacoesSelecionadas.join(', '),
+        };
+    });
 
     try {
         const response = await fetch(`/pedidos/${pedidoId}`, {
@@ -235,8 +278,6 @@ document.getElementById('formDetalhesPedido').addEventListener('submit', async (
         alert('Erro ao salvar alterações.');
     }
 });
-
-
 
 
         carregarDetalhesPedido();

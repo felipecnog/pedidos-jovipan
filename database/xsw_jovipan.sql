@@ -30,7 +30,7 @@ CREATE TABLE `clientes` (
   `endereco` text NOT NULL,
   `criado_em` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,8 @@ LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
 INSERT INTO `clientes` VALUES
 (15,'Felipe Campos Nogueira','85982057590','Rua General Bernardo','2024-12-26 17:00:42'),
-(16,'Tiago Magalhães','85997933381','Sem','2024-12-26 19:25:21');
+(16,'Tiago Magalhães','85997933381','Sem','2024-12-26 19:25:21'),
+(17,'Leontino','85999402813','Av Jovita Feitosa 1196','2024-12-31 13:32:24');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -79,7 +80,7 @@ INSERT INTO `pedidos` VALUES
 (25,'419396',16,'retirada','e','2024-12-27 16:19:45','em preparação'),
 (27,'281187',15,'envio','teste','2024-12-29 15:58:53','em preparação'),
 (28,'895459',16,'envio','teste','2024-12-29 17:00:10','feito'),
-(29,'393327',15,'envio',NULL,'2024-12-29 17:06:38','feito');
+(29,'393327',15,'retirada','','2024-12-29 17:06:38','enviado');
 /*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -96,7 +97,7 @@ CREATE TABLE `produtos` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `variacoes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`variacoes`)),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -106,8 +107,9 @@ CREATE TABLE `produtos` (
 LOCK TABLES `produtos` WRITE;
 /*!40000 ALTER TABLE `produtos` DISABLE KEYS */;
 INSERT INTO `produtos` VALUES
-(5,'Salgado','2024-12-30 10:24:54','[\"Coxinha\",\"Canudinho\",\"Pastel de Queijo\",\"Pastel de Carne\",\"Risole\",\"Travisseirinho\",\"Empada\"]'),
-(7,'torta','2024-12-30 11:36:14','[\"Morango\"]');
+(5,'Cento Salgado Frito','2024-12-30 10:24:54','[\"25x Coxinha\",\"25x Canudinho\",\"25x Bolinha de Queijo\",\"25x Pastel de Carne\",\"25x Pastel de Queijo\"]'),
+(7,'Torta Doce 15','2024-12-30 11:36:14','[\"Maracujá\",\"Limão\",\"Doce de Leite\",\"Crocante\",\"Prestígio\",\"Sonho de Valsa\",\"Chocolate\",\"Brigadeiro\",\"Ninho\"]'),
+(8,'Torta Doce 25','2024-12-31 13:48:24','[\"Maracujá\",\"Limão\",\"Doce de Leite\",\"Crocante\",\"Prestígio\",\"Sonho de Valsa\",\"Chocolate\",\"Brigadeiro\",\"Ninho\"]');
 /*!40000 ALTER TABLE `produtos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -126,7 +128,7 @@ CREATE TABLE `produtos_pedido` (
   PRIMARY KEY (`id`),
   KEY `pedido_codigo` (`pedido_codigo`),
   CONSTRAINT `produtos_pedido_ibfk_1` FOREIGN KEY (`pedido_codigo`) REFERENCES `pedidos` (`codigo`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,7 +142,12 @@ INSERT INTO `produtos_pedido` VALUES
 (10,'281187','teste','teste'),
 (13,'281187','teste2','teste2'),
 (15,'895459','teste','teste'),
-(16,'895459','teste4','teste4');
+(16,'895459','teste4','teste4'),
+(25,'393327','Cento Salgado Frito','25x Coxinha, 25x Canudinho, 25x Bolinha de Queijo, 25x Pastel de Carne'),
+(26,'393327','Torta Doce 15','Sonho de Valsa'),
+(27,'393327','Torta Doce 15','Sonho de Valsa'),
+(28,'393327','Cento Salgado Frito','25x Coxinha, 25x Canudinho, 25x Bolinha de Queijo, 25x Pastel de Carne, 25x Pastel de Queijo'),
+(29,'393327','Cento Salgado Frito','25x Bolinha de Queijo');
 /*!40000 ALTER TABLE `produtos_pedido` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -212,4 +219,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-12-30  8:43:41
+-- Dump completed on 2024-12-31 12:06:13
