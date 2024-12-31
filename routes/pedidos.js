@@ -28,18 +28,19 @@ async function gerarCodigoUnico() {
     }
 }
 
+
 // Função auxiliar para salvar o pedido no banco de dados
-async function salvarPedido(clienteId, envio, observacoes) {
+async function salvarPedido(clienteId, envio, observacoes, horaEnvio, pagamento) {
     try {
         // Gera o código único para o pedido
         const codigo = await gerarCodigoUnico();
 
-        // Insere o pedido no banco de dados
+        // Insere o pedido no banco de dados, incluindo hora_envio e pagamento
         const query = `
-            INSERT INTO pedidos (cliente_id, envio, observacoes, codigo, created_at) 
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO pedidos (cliente_id, envio, observacoes, codigo, hora_envio, pagamento, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
         `;
-        const [result] = await db.execute(query, [clienteId, envio, observacoes, codigo]);
+        const [result] = await db.execute(query, [clienteId, envio, observacoes || null, codigo, horaEnvio, pagamento]);
 
         return { id: result.insertId, clienteId, envio, observacoes, codigo };
     } catch (err) {
@@ -51,19 +52,23 @@ async function salvarPedido(clienteId, envio, observacoes) {
 // Rota POST - Criar Pedido
 router.post('/', async (req, res) => {
     try {
-        const { clienteId, envio, observacoes } = req.body;
+        const { clienteId, envio, observacoes, horaEnvio, pagamento } = req.body;
 
-        if (!clienteId || !envio) {
-            return res.status(400).json({ error: 'Os campos cliente e envio são obrigatórios.' });
+        if (!clienteId || !envio || !horaEnvio || !pagamento) {
+            return res.status(400).json({ error: 'Os campos cliente, envio, hora_envio e pagamento são obrigatórios.' });
         }
 
-        const pedido = await salvarPedido(clienteId, envio, observacoes || null);
+        // Chame a função de inserção no banco de dados
+        const pedido = await salvarPedido(clienteId, envio, observacoes || null, horaEnvio, pagamento);
         res.status(201).json(pedido);
     } catch (err) {
         console.error('Erro ao processar pedido:', err.message);
         res.status(500).json({ error: 'Erro no servidor.', details: err.message });
     }
 });
+
+
+
 
 // Rota GET - Listar Pedidos em pedidos.html
 router.get('/', async (req, res) => {
@@ -92,6 +97,7 @@ router.get('/', async (req, res) => {
     }
 });
 // Rota GET - Listar Pedidos em detalhes.html
+// Rota GET - Listar Pedidos em detalhes.html
 router.get('/:codigo', async (req, res) => {
     const { codigo } = req.params;
     try {
@@ -102,6 +108,8 @@ router.get('/:codigo', async (req, res) => {
                 pedidos.observacoes,
                 pedidos.status,
                 pedidos.created_at,
+                pedidos.hora_envio,
+                pedidos.pagamento,
                 clientes.nome AS cliente_nome,
                 clientes.telefone AS cliente_telefone,
                 clientes.endereco AS cliente_endereco
@@ -121,6 +129,7 @@ router.get('/:codigo', async (req, res) => {
 });
 
 
+
 // Rota GET - Gerar Código Único
 router.get('/gerar-codigo', async (req, res) => {
     try {
@@ -135,16 +144,20 @@ router.get('/gerar-codigo', async (req, res) => {
 // Rota PUT - Atualizar Pedido
 router.put('/:pedido_id', async (req, res) => {
     const { pedido_id } = req.params;
-    const { envio, status, observacoes, produtos } = req.body;
+    const { envio, status, observacoes, horaEnvio, pagamento, produtos } = req.body; // Adicionando horaEnvio e pagamento
+
+    // Garantir que campos indefinidos sejam substituídos por null
+    const horaEnvioValor = horaEnvio || null; // Se horaEnvio for undefined, passa null
+    const pagamentoValor = pagamento || null; // Se pagamento for undefined, passa null
 
     try {
         // Atualizar os dados do pedido
         const updatePedidoQuery = `
             UPDATE pedidos 
-            SET envio = ?, status = ?, observacoes = ? 
+            SET envio = ?, status = ?, observacoes = ?, hora_envio = ?, pagamento = ? 
             WHERE codigo = ?
         `;
-        await db.execute(updatePedidoQuery, [envio, status, observacoes, pedido_id]);
+        await db.execute(updatePedidoQuery, [envio, status, observacoes, horaEnvioValor, pagamentoValor, pedido_id]); // Passando os valores de horaEnvio e pagamento
 
         // Atualizar ou adicionar produtos
         const insertOrUpdateProdutoQuery = `
@@ -172,6 +185,8 @@ router.put('/:pedido_id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao atualizar pedido e produtos.' });
     }
 });
+
+
 
 
 

@@ -61,13 +61,15 @@ CREATE TABLE `pedidos` (
   `observacoes` longtext DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `status` enum('feito','em preparação','finalizado','enviado','concluído') NOT NULL DEFAULT 'feito',
+  `hora_envio` time DEFAULT NULL,
+  `pagamento` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`),
   UNIQUE KEY `codigo_2` (`codigo`),
   UNIQUE KEY `codigo_3` (`codigo`),
   KEY `cliente_id` (`cliente_id`),
   CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -77,10 +79,11 @@ CREATE TABLE `pedidos` (
 LOCK TABLES `pedidos` WRITE;
 /*!40000 ALTER TABLE `pedidos` DISABLE KEYS */;
 INSERT INTO `pedidos` VALUES
-(25,'419396',16,'retirada','e','2024-12-27 16:19:45','em preparação'),
-(27,'281187',15,'envio','teste','2024-12-29 15:58:53','em preparação'),
-(28,'895459',16,'envio','teste','2024-12-29 17:00:10','feito'),
-(29,'393327',15,'retirada','','2024-12-29 17:06:38','enviado');
+(25,'419396',16,'retirada','e','2024-12-27 16:19:45','em preparação',NULL,NULL),
+(27,'281187',15,'envio','teste','2024-12-29 15:58:53','em preparação',NULL,NULL),
+(28,'895459',16,'envio','teste','2024-12-29 17:00:10','feito',NULL,NULL),
+(29,'393327',15,'retirada','','2024-12-29 17:06:38','enviado',NULL,NULL),
+(36,'376174',15,'envio','','2024-12-31 18:22:01','feito','15:00:00','dinheiros');
 /*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -128,7 +131,7 @@ CREATE TABLE `produtos_pedido` (
   PRIMARY KEY (`id`),
   KEY `pedido_codigo` (`pedido_codigo`),
   CONSTRAINT `produtos_pedido_ibfk_1` FOREIGN KEY (`pedido_codigo`) REFERENCES `pedidos` (`codigo`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -147,7 +150,9 @@ INSERT INTO `produtos_pedido` VALUES
 (26,'393327','Torta Doce 15','Sonho de Valsa'),
 (27,'393327','Torta Doce 15','Sonho de Valsa'),
 (28,'393327','Cento Salgado Frito','25x Coxinha, 25x Canudinho, 25x Bolinha de Queijo, 25x Pastel de Carne, 25x Pastel de Queijo'),
-(29,'393327','Cento Salgado Frito','25x Bolinha de Queijo');
+(31,'393327','Cento Salgado Frito','25x Bolinha de Queijo'),
+(32,'376174','Cento Salgado Frito','25x Canudinho'),
+(33,'376174','Cento Salgado Frito','');
 /*!40000 ALTER TABLE `produtos_pedido` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -219,4 +224,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-12-31 12:06:13
+-- Dump completed on 2024-12-31 17:30:25

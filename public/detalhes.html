@@ -15,7 +15,7 @@
                 <div class="col d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="button" class="btn btn-danger" onclick="window.history.back()"><i class="bi bi-arrow-left"></i> Voltar para página de pedidos</button>
                     <button type="submit" class="btn btn-primary"><i class="bi bi-floppy"></i> Salvar Alterações do Pedido</button>
-                    <button type="button" class="btn btn-info"><i class="bi bi-printer"></i> Imprimir pedido</button>
+                    <button type="button" class="btn btn-info" onclick="imprimirPedido()"><i class="bi bi-printer"></i> Imprimir pedido</button>
                 </div>
             </div>
         </div>
@@ -40,14 +40,22 @@
                     <label for="endereco" class="form-label">Endereço</label>
                     <input type="text" id="endereco" class="form-control" disabled>
                 </div>
-                <div class="col-6">
+                <div class="col-3">
                     <label for="envio" class="form-label">Método de entrega</label>
                     <select id="envio" class="form-select">
                         <option value="envio">Enviar para Cliente</option>
                         <option value="retirada">Retirada em Loja</option>
                     </select>
                 </div>
-                <div class="col-6">
+                <div class="col-3">
+                    <label for="horaEnvio" class="form-label">Hora de Envio</label>
+                    <input type="text" id="horaEnvio" class="form-control">
+                </div>
+                <div class="col-3">
+                    <label for="pagamento" class="form-label">Método de Pagamento</label>
+                    <input type="text" id="pagamento" class="form-control">
+                </div>
+                <div class="col-3">
                     <label for="status" class="form-label">Status</label>
                     <select id="status" class="form-select">
                         <option value="feito">Feito</option>
@@ -68,10 +76,13 @@
                 </div>
             </div>
             <div class="row containerJ mt-4">
-                <div class="col">
-                    <button type="button" id="adicionarProduto" class="btn btn-secondary mt-3">Adicionar Produto</button>
-                    <h3 class="mt-4">Produtos do pedido</h3>
+                <div class="col-12">
+                    <h1>Produtos do pedido</h1>
+                </div>
+                <div class="col-12">
                     <div id="produtosContainer"></div>
+                    <button type="button" id="adicionarProduto" class="btn btn-secondary mt-3">Adicionar Produto</button>
+                    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-floppy"></i> Salvar Alterações do Pedido</button>
                 </div>
             </div>
         </div>
@@ -82,32 +93,37 @@
         const pedidoId = params.get('codigo');
 
         async function carregarDetalhesPedido() {
-            if (!pedidoId) {
-                alert('Código do pedido não fornecido!');
-                window.history.back();
-                return;
-            }
+    if (!pedidoId) {
+        alert('Código do pedido não fornecido!');
+        window.history.back();
+        return;
+    }
 
-            try {
-                const response = await fetch(`/pedidos/${pedidoId}`);
-                if (!response.ok) throw new Error('Erro ao buscar o pedido.');
+    try {
+        const response = await fetch(`/pedidos/${pedidoId}`);
+        if (!response.ok) throw new Error('Erro ao buscar o pedido.');
 
-                const pedido = await response.json();
-                document.getElementById('codigo').value = pedido.codigo;
-                document.getElementById('cliente').value = pedido.cliente_nome || '';
-                document.getElementById('telefone').value = pedido.cliente_telefone || '';
-                document.getElementById('endereco').value = pedido.cliente_endereco || '';
-                document.getElementById('envio').value = pedido.envio || '';
-                document.getElementById('status').value = pedido.status || '';
-                document.getElementById('observacoes').value = pedido.observacoes || '';
+        const pedido = await response.json();
+        document.getElementById('codigo').value = pedido.codigo;
+        document.getElementById('cliente').value = pedido.cliente_nome || '';
+        document.getElementById('telefone').value = pedido.cliente_telefone || '';
+        document.getElementById('endereco').value = pedido.cliente_endereco || '';
+        document.getElementById('envio').value = pedido.envio || '';
+        document.getElementById('status').value = pedido.status || '';
+        document.getElementById('observacoes').value = pedido.observacoes || '';
 
-                carregarProdutos(pedido.codigo);
-            } catch (err) {
-                console.error('Erro ao carregar os detalhes do pedido:', err.message);
-                alert('Erro ao carregar os detalhes do pedido.');
-                window.history.back();
-            }
-        }
+        // Preencher os campos hora_envio e pagamento
+        document.getElementById('horaEnvio').value = pedido.hora_envio || '';
+        document.getElementById('pagamento').value = pedido.pagamento || '';
+
+        carregarProdutos(pedido.codigo);
+    } catch (err) {
+        console.error('Erro ao carregar os detalhes do pedido:', err.message);
+        alert('Erro ao carregar os detalhes do pedido.');
+        window.history.back();
+    }
+}
+
 
         async function carregarProdutos(pedidoCodigo) {
     try {
@@ -157,7 +173,7 @@
                     try {
                         await excluirProduto(produtoId);
                         tr.remove(); // Remove a linha da tabela
-                        alert('Produto excluído com sucesso!');
+                        //alert('Produto excluído com sucesso!');
                     } catch (err) {
                         console.error('Erro ao excluir produto:', err.message);
                         alert('Erro ao excluir produto.');
@@ -204,16 +220,17 @@ document.getElementById('adicionarProduto').addEventListener('click', async () =
     const produtosDisponiveis = await carregarProdutosDisponiveis();
 
     produtoDiv.innerHTML = `
-        <label class="form-label">Produto</label>
-        <select class="form-select produto-nome">
+    <label class="form-label">Novo  Produto</label>
+    <div class="d-flex align-items-center">
+        <select class="form-select produto-nome me-2">
             <option value="">Selecione um produto</option>
             ${produtosDisponiveis.map(produto => `<option value="${produto.nome}">${produto.nome}</option>`).join('')}
         </select>
-        <div class="form-check mt-2 variacoes-container">
-            <strong>Variações:</strong>
-        </div>
-        <button type="button" class="btn btn-danger mt-2 btn-remover-produto">Remover Produto</button>
-    `;
+        <button type="button" class="btn btn-danger btn-sm btn-remover-produto">Excluir</button>
+    </div>
+    <div class="form-check mt-2 variacoes-container"></div>
+`;
+
 
     const selectProduto = produtoDiv.querySelector('.produto-nome');
     const variacoesContainer = produtoDiv.querySelector('.variacoes-container');
@@ -249,6 +266,8 @@ document.getElementById('formDetalhesPedido').addEventListener('submit', async (
     const envio = document.getElementById('envio').value;
     const status = document.getElementById('status').value;
     const observacoes = document.getElementById('observacoes').value;
+    const horaEnvio = document.getElementById('horaEnvio').value; // Captura o campo de Hora de Envio
+    const pagamento = document.getElementById('pagamento').value; // Captura o campo de Pagamento
 
     const produtos = Array.from(document.querySelectorAll('.produto-item')).map(item => {
         const produtoSelecionado = item.querySelector('.produto-nome').value;
@@ -266,7 +285,7 @@ document.getElementById('formDetalhesPedido').addEventListener('submit', async (
         const response = await fetch(`/pedidos/${pedidoId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ envio, status, observacoes, produtos }),
+            body: JSON.stringify({ envio, status, observacoes, horaEnvio, pagamento, produtos }), // Envia os dados incluindo horaEnvio e pagamento
         });
 
         if (!response.ok) throw new Error('Erro ao atualizar pedido.');
@@ -278,6 +297,96 @@ document.getElementById('formDetalhesPedido').addEventListener('submit', async (
         alert('Erro ao salvar alterações.');
     }
 });
+
+function imprimirPedido() {
+    const codigo = document.getElementById('codigo').value;
+    const cliente = document.getElementById('cliente').value;
+    const telefone = document.getElementById('telefone').value;
+    const endereco = document.getElementById('endereco').value;
+    const envio = document.getElementById('envio').value;
+    const observacoes = document.getElementById('observacoes').value;
+
+    let produtosHTML = '';
+    document.querySelectorAll('#produtosContainer tbody tr').forEach(tr => {
+        const produto = tr.querySelector('td:nth-child(1)').textContent;
+        const detalhes = tr.querySelector('td:nth-child(2)').textContent;
+
+        // Criando uma lista para as variações do produto
+        const variacoesList = detalhes.split(',').map(variacao => `<li>${variacao.trim()}</li>`).join('');
+
+        produtosHTML += `
+            <p><strong>Produto:</strong> ${produto}</p>
+            <p><strong>Variações:</strong></p>
+            <ul>${variacoesList}</ul>
+        `;
+    });
+
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Imprimir Pedido</title>
+                <style>
+                    /* Ajusta a largura da página para 58mm (típico para impressoras térmicas) */
+                    @page {
+                        size: 58mm auto;
+                        margin: 0;
+                    }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 12px;
+                        padding: 5mm;
+                        width: 58mm;
+                        margin: 0;
+                    }
+
+                    h1, h3 {
+                        text-align: center;
+                        font-size: 14px;
+                        margin: 0;
+                    }
+
+                    p {
+                        margin: 2mm 0;
+                        font-size: 12px;
+                    }
+
+                    strong {
+                        font-weight: bold;
+                    }
+
+                    ul {
+                        padding-left: 10px;
+                        font-size: 12px;
+                    }
+
+                    li {
+                        list-style-type: none;
+                        font-size: 12px;
+                    }
+
+                    .product-details {
+                        font-size: 12px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Detalhes do Pedido - Código: ${codigo}</h1>
+                <p><strong>Cliente:</strong> ${cliente}</p>
+                <p><strong>Telefone:</strong> ${telefone}</p>
+                <p><strong>Endereço:</strong> ${endereco}</p>
+                <p><strong>Método de Entrega:</strong> ${envio}</p>
+                <p><strong>Observações:</strong> ${observacoes}</p>
+                <h3>Produtos:</h3>
+                ${produtosHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
 
 
         carregarDetalhesPedido();
