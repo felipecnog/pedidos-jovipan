@@ -49,11 +49,16 @@
                 </div>
                 <div class="col-3">
                     <label for="horaEnvio" class="form-label">Hora de Envio</label>
-                    <input type="text" id="horaEnvio" class="form-control">
+                    <input type="time" id="horaEnvio" class="form-control">
                 </div>
                 <div class="col-3">
                     <label for="pagamento" class="form-label">Método de Pagamento</label>
-                    <input type="text" id="pagamento" class="form-control">
+                    <select id="pagamento" class="form-select">
+                        <option value="">Selecione o método</option>
+                            <option value="Não pagou">Não pagou</option>
+                            <option value="50%">50%</option>
+                            <option value="100%">100%</option>
+                    </select>
                 </div>
                 <div class="col-3">
                     <label for="status" class="form-label">Status</label>
@@ -70,11 +75,7 @@
                     <textarea id="observacoes" class="form-control"></textarea>
                 </div>
             </div>
-            <div class="row">
-                <div class="col">
-                    
-                </div>
-            </div>
+
             <div class="row containerJ mt-4">
                 <div class="col-12">
                     <h1>Produtos do pedido</h1>
@@ -305,6 +306,8 @@ function imprimirPedido() {
     const endereco = document.getElementById('endereco').value;
     const envio = document.getElementById('envio').value;
     const observacoes = document.getElementById('observacoes').value;
+    const pagamento = document.getElementById('pagamento').value;
+    const horaEnvio = document.getElementById('horaEnvio').value;
 
     let produtosHTML = '';
     document.querySelectorAll('#produtosContainer tbody tr').forEach(tr => {
@@ -315,8 +318,7 @@ function imprimirPedido() {
         const variacoesList = detalhes.split(',').map(variacao => `<li>${variacao.trim()}</li>`).join('');
 
         produtosHTML += `
-            <p><strong>Produto:</strong> ${produto}</p>
-            <p><strong>Variações:</strong></p>
+            <strong>${produto}</strong>
             <ul>${variacoesList}</ul>
         `;
     });
@@ -325,7 +327,7 @@ function imprimirPedido() {
     printWindow.document.write(`
         <html>
             <head>
-                <title>Imprimir Pedido</title>
+                <title>Imprimir Pedido nº ${codigo}</title>
                 <style>
                     /* Ajusta a largura da página para 58mm (típico para impressoras térmicas) */
                     @page {
@@ -341,10 +343,15 @@ function imprimirPedido() {
                         margin: 0;
                     }
 
-                    h1, h3 {
+                    h1{
                         text-align: center;
-                        font-size: 14px;
+                        font-size: 16px;
                         margin: 0;
+                    }
+                    h3 {
+                        text-align: center;
+                        font-size: 12px;
+                        margin: 10px 0px;
                     }
 
                     p {
@@ -372,13 +379,21 @@ function imprimirPedido() {
                 </style>
             </head>
             <body>
-                <h1>Detalhes do Pedido - Código: ${codigo}</h1>
-                <p><strong>Cliente:</strong> ${cliente}</p>
-                <p><strong>Telefone:</strong> ${telefone}</p>
-                <p><strong>Endereço:</strong> ${endereco}</p>
-                <p><strong>Método de Entrega:</strong> ${envio}</p>
-                <p><strong>Observações:</strong> ${observacoes}</p>
-                <h3>Produtos:</h3>
+                <h1>Pedido nº ${codigo}</h1>
+                <h3>Informações do Cliente:</h3>
+                <p>Cliente: ${cliente}</p>
+                <p>Telefone: ${telefone}</p>
+                <p>Endereço: ${endereco}</p>
+                <hr>
+                <h3>Informações Pagamento e Envio:</h3>
+                <p>Pagamento: ${pagamento}</p>
+                <p>Método de Entrega: ${envio}</p>
+                <p>Envio/Retirada: ${horaEnvio}</p>
+                <hr>
+                <h3>Outras Informações:</h3>
+                <p>Observações: ${observacoes}</p>
+                <hr>
+                <h3>Detalhes:</h3>
                 ${produtosHTML}
             </body>
         </html>
