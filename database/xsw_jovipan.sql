@@ -69,7 +69,7 @@ CREATE TABLE `pedidos` (
   UNIQUE KEY `codigo_3` (`codigo`),
   KEY `cliente_id` (`cliente_id`),
   CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -83,7 +83,9 @@ INSERT INTO `pedidos` VALUES
 (27,'281187',15,'envio','teste','2024-12-29 15:58:53','em preparação',NULL,NULL),
 (28,'895459',16,'envio','teste','2024-12-29 17:00:10','feito',NULL,NULL),
 (29,'393327',15,'retirada','','2024-12-29 17:06:38','enviado',NULL,NULL),
-(36,'376174',15,'envio','','2024-12-31 18:22:01','feito','15:00:00','dinheiros');
+(36,'376174',15,'envio','','2024-12-31 18:22:01','feito','15:00:00','dinheiros'),
+(37,'414238',17,'envio','','2024-12-31 23:38:26','feito','23:38:00','100%'),
+(38,'698771',17,'envio',NULL,'2025-01-01 22:49:10','feito','15:50:00','Não pagou');
 /*!40000 ALTER TABLE `pedidos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -131,7 +133,7 @@ CREATE TABLE `produtos_pedido` (
   PRIMARY KEY (`id`),
   KEY `pedido_codigo` (`pedido_codigo`),
   CONSTRAINT `produtos_pedido_ibfk_1` FOREIGN KEY (`pedido_codigo`) REFERENCES `pedidos` (`codigo`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -152,7 +154,10 @@ INSERT INTO `produtos_pedido` VALUES
 (28,'393327','Cento Salgado Frito','25x Coxinha, 25x Canudinho, 25x Bolinha de Queijo, 25x Pastel de Carne, 25x Pastel de Queijo'),
 (31,'393327','Cento Salgado Frito','25x Bolinha de Queijo'),
 (32,'376174','Cento Salgado Frito','25x Canudinho'),
-(33,'376174','Cento Salgado Frito','');
+(33,'376174','Cento Salgado Frito',''),
+(34,'414238','Cento Salgado Frito','25x Coxinha, 25x Canudinho, 25x Bolinha de Queijo, 25x Pastel de Carne'),
+(35,'414238','Torta Doce 15','Doce de Leite'),
+(36,'414238','Torta Doce 25','Chocolate');
 /*!40000 ALTER TABLE `produtos_pedido` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -170,7 +175,7 @@ CREATE TABLE `usuarios` (
   `status` enum('ativo','bloqueado') DEFAULT 'ativo',
   `categoria` enum('administrador','utilizador') DEFAULT 'utilizador',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -180,11 +185,9 @@ CREATE TABLE `usuarios` (
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
 INSERT INTO `usuarios` VALUES
-(1,'Felipe','2509','ativo','administrador'),
-(33,'Joaquim Barata Lima Campos Nogueira','$2b$10$a.qsmbjZkDCATuvntiNTfunQisDF8g9uvukRhKV258fDsIrGqmK9a','ativo','administrador'),
-(34,'felipe2','$2b$10$oIzFFbHL0O4M2QEI/swp8.zfW7UPJoE.vFLrUoBajIjDOmBlTpjBG','ativo','administrador'),
-(35,'felipe3','$2b$10$.G9duc/d7oPn5Z6Nl4VgPu0fUH/KXInoe3txp73Z.v1VhhLipEftm','ativo','administrador'),
-(36,'felipe5','$2b$10$nk.96t7oCqbnT1Pr6mf3huuRXjiT7oInFQ0klNoC0DvRg97Cpsr9W','ativo','administrador');
+(39,'admin','$2a$10$Zw6x5kckyo4H7Ev7DzH.gu9nTFCakJJ6DWDq3f2yPgHSvZ75/jNzy','ativo','administrador'),
+(40,'user','$2a$10$48hQmEOnj321LMQgRAqBo.s5VCKq0QWy9LIidTH6/bxsEW4Av6xV2','ativo','utilizador'),
+(41,'felipe','$2b$10$k2cO3B3QL1CeLmfkHrrZ7Oi1OtFBhvxyuCrWk49Znt8.wDaV7T3JW','ativo','administrador');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -224,4 +227,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-12-31 17:30:25
+-- Dump completed on 2025-01-01 20:03:08

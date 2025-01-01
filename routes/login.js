@@ -1,52 +1,39 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const appModel = require('../models/app');
+const db = require('../db'); // Importando a instância do pool
+
 const router = express.Router();
 
-// Rota de login
 router.post('/', async (req, res) => {
     const { nome, senha } = req.body;
 
+    if (!nome || !senha) {
+        return res.status(400).json({ error: 'Nome de usuário e senha são obrigatórios' });
+    }
+
     try {
-        const usuario = await appModel.getUserByName(nome);
-        if (!usuario) {
-            return res.status(400).json({ message: 'Usuário não encontrado.' });
+        const [results] = await db.execute('SELECT * FROM usuarios WHERE nome = ?', [nome]);
+
+        if (results.length === 0) {
+            return res.status(400).json({ error: 'Usuário não encontrado' });
         }
 
-        //const senhaCorreta = await appModel.compararSenha(senha, usuario.senha);
-        //if (!senhaCorreta) {
-        //    return res.status(400).json({ message: 'Senha incorreta.' });
-        //}
+        const usuario = results[0];
+        const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
 
-        // Compara a senha fornecida com o hash armazenado
-        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
-        if (!senhaCorreta) {
-            return res.status(400).json({ error: 'Senha incorreta' });
+        if (!isPasswordValid) {
+            return res.status(400).json({ error: 'Senha inválida' });
         }
 
-        // Armazena as informações do usuário na sessão
-        //req.session.usuario = { id: usuario.id, nome: usuario.nome, categoria: usuario.categoria };
-        //res.status(200).json({ message: 'Login bem-sucedido.' });
-    //} catch (err) {
-        //console.error(err);
-        //res.status(500).json({ message: 'Erro no servidor. Tente novamente mais tarde.' });
-    //}
-        // Autenticação bem-sucedida, retorne um token ou mensagem
-        res.status(200).json({ message: 'Login bem-sucedido' });
+        // Configura a sessão do usuário após login
+        req.session.userId = usuario.id;
+        req.session.userRole = usuario.categoria;  // Define o papel (administrador ou utilizador)
+
+        res.status(200).json({ message: 'Login bem-sucedido', role: usuario.categoria });
     } catch (err) {
-        console.error('Erro ao realizar login:', err.message);
-        res.status(500).json({ error: 'Erro no servidor. Tente novamente mais tarde.' });
+        console.error('Erro ao acessar o banco de dados:', err);
+        res.status(500).json({ error: 'Erro ao acessar o banco de dados' });
     }
 });
-
-// Rota de logout
-//router.post('/logout', (req, res) => {
-//    req.session.destroy((err) => {
-//        if (err) {
-//            return res.status(500).json({ message: 'Erro ao fazer logout.' });
-//        }
-//        res.status(200).json({ message: 'Logout bem-sucedido.' });
-//    });
-//});
 
 module.exports = router;
